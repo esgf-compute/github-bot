@@ -1,0 +1,27 @@
+package:
+  name: nimbus-github-bot
+  version: 1.0.0
+
+source:
+  path: ./
+
+build:
+  number: {{ environ.get('BUILD_NUMBER', 0) }}
+  script: "{{ PYTHON }} -m pip install . --no-deps --ignore-installed --no-cache-dir -vvv"
+  noarch: python
+
+requirements:
+  build:
+    - git
+
+  host:
+    - python
+
+  run:
+    - python
+    - pygithub
+    - pyramid
+
+about:
+  home: https://github.com/esgf-nimbus/github-bot
+  summary: GitHub bot to process access requests to Nimbus cluster

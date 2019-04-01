@@ -1,0 +1,79 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: nimbus-github-bot
+  labels:
+    app: nimbus-github-bot
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nimbus-github-bot
+  template:
+    metadata:
+      labels:
+        app: nimbus-github-bot
+    spec:
+      nodeSelector:
+        tier: backend
+      containers:
+      - name: nimbus-github-bot
+        image: jasonb87/nimbus-github-bot:latest
+        imagePullPolicy: Always
+        envFrom:
+        - configMapRef:
+            name: nimbus-github-bot-config
+        - secretRef:
+            name: nimbus-github-bot-secret
+        ports:
+        - containerPort: 8000
+      volumes:
+      - name: nimbus-github-bot-secret
+        secret:
+          secretName: nimbus-github-bot-secret
+      - name: nimbus-github-bot-config
+        configMap:
+          name: nimbus-github-bot-config
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nimbus-github-bot-config
+data:
+  GIT_ORGANIZATION: ""
+  EXTERNAL_HOST: ""
+  CALLBACK_PATH: ""
+  NAMESPACE: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nimbus-github-bot-secret
+type: Opaque
+data:
+  GIT_USERNAME: ""
+  GIT_PASSWORD: ""
+---
+kind: Service
+apiVersion: v1
+metadata:
+  name: nimbus-github-bot
+spec:
+  selector:
+    app: nimbus-github-bot
+  ports:
+  - protocol: TCP
+    port: 8000
+---
+apiVersion: extensions/v1beta1
+kind: Ingress
+metadata:
+  name: nimbus-github-bot
+spec:
+  rules:
+  - http:
+      paths:
+      - backend:
+          serviceName: nimbus-github-bot
+          servicePort: 8000
+        path: /github/webhook/bot
