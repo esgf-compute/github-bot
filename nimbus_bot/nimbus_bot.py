@@ -15,7 +15,7 @@ PASSWORD = os.environ['GIT_PASSWORD']
 CALLBACK_PATH = os.environ['CALLBACK_PATH']
 EXTERNAL_HOST = os.environ['EXTERNAL_HOST']
 ORGANIZATION = os.enivron['ORGANIZATION']
-LOGGING_LEVEL = os.environ['LOGGING_LEVEL']
+LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO')
 
 MSG_ACK = """
 @esgf-nimbus/admin Please review this application.

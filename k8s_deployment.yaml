@@ -43,7 +43,6 @@ data:
   GIT_ORGANIZATION: ""
   EXTERNAL_HOST: ""
   CALLBACK_PATH: ""
-  NAMESPACE: ""
 ---
 apiVersion: v1
 kind: Secret
