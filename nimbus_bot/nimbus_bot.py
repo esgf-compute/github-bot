@@ -80,25 +80,32 @@ logging.info('Retrieved repo %r', repo.id)
 def check_denied(payload=None, issue=None):
     try:
         if payload is not None:
+            logging.info('Processing payload')
+
             repo_check = payload['repository']['id'] == repo.id
             admin_check = payload['comment']['user']['id'] in admin_id
             denied_check = DENIED_PATTERN.search(payload['comment']['body']) is not None
 
-            if repo_check and admin_check and denied_check:
-                issue = repo.get_issue(payload['issue']['id'])
+            logging.info('RepoCheck %r AdminCheck %r DeniedCheck %r', repo_check, admin_check, denied_check)
+
+            issue = repo.get_issue(payload['issue']['number'])
         else:
             for comment in issue.get_comments():
+                logging.info('Checking commend %r', comment.body)
+
                 denied_check = DENIED_PATTERN.search(comment.body) is not None
 
                 if denied_check:
                     break
 
+        logging.info('Processing issue %r', issue.id)
+
         if denied_check:
             issue.edit(state='closed', labels=['request-denied',])
 
-            logging.info('Found denied comment, closing issue')
+            logging.info('Access denied')
         else:
-            logging.info('Did not find a denied comment')
+            logging.info('Access not denied')
     except KeyError as e:
         logging.error('Missing key in payload %r', e)
     except GithubException as e:
@@ -107,7 +114,11 @@ def check_denied(payload=None, issue=None):
 def notify_team(payload=None, issue=None):
     try:
         if payload is not None and payload['repository']['id'] == repo.id:
-            issue = repo.get_issue(payload['issue']['id'])
+            logging.info('Processing payload')
+
+            issue = repo.get_issue(payload['issue']['number'])
+
+        logging.info('Processing issue %r', issue.id)
 
         ack = False
 
@@ -116,11 +127,15 @@ def notify_team(payload=None, issue=None):
         for comment in issue.get_comments():
             if (comment.user.login == g.get_user().login and
                 comment.body == msg):
+                logging.info('Found an existing acknowledgement')
+
                 ack = True
 
                 break
 
         if not ack:
+            logging.info('Posting acknowledgement comment')
+
             issue.create_comment(msg)
     except KeyError as e:
         logging.error('Missing key in payload %r', e)
@@ -130,7 +145,7 @@ def notify_team(payload=None, issue=None):
 def notify_invite(payload):
     try:
         if payload['organization']['id'] == org.id:
-            logging.info('Recieved an invite search for related issue')
+            logging.info('Processing payload')
 
             issues = repo.get_issues(state='opened', 
                                      labels=[awaiting_review,], 
@@ -141,6 +156,8 @@ def notify_invite(payload):
             if issues.totalCount > 0:
                 msg = MSG_INV.format(issue=issue)
 
+                logging.info('Posting invite message')
+
                 issues[0].create_comment(msg)
     except KeyError as e:
         logging.error('Missing key in payload %r', e)
@@ -150,16 +167,18 @@ def notify_invite(payload):
 def notify_added(payload):
     try:
         if payload['organization']['id'] == org.id:
-            logging.info('User added search for related issue')
+            logging.info('Processing payload')
 
-            issues = repo.get_issues(state='opened', 
-                                     labels=[awaiting_review,], 
+            issues = repo.get_issues(state='open', 
+                                     labels=[awaiting,], 
                                      creator=payload['membership']['user']['login'])
 
             logging.info('Found %r issues', issues.totalCount)
 
             if issues.totalCount > 0:
-                msg = MSG_ADD.format(issue=issue)
+                msg = MSG_ADD.format(issue=issues[0])
+
+                logging.info('Posting added message')
 
                 issues[0].create_comment(msg)
 
@@ -177,11 +196,15 @@ class PayloadView(object):
 
     @view_config(header='X-Github-Event:issue_comment')
     def payload_issue_commend(self):
+        logging.debug('issue_comment %r', self.payload)
+
         if self.payload['action'] == 'created':
             check_denied(self.payload)
 
     @view_config(header='X-Github-Event:issues')
     def payload_issues(self):
+        logging.debug('issues %r', self.payload)
+
         if self.payload['action'] == 'labeled':
             if 'awaiting-review' == self.payload['label']['name']:
                 notify_team(payload=self.payload)
@@ -190,6 +213,8 @@ class PayloadView(object):
 
     @view_config(header='X-Github-Event:organization')
     def payload_organization(self):
+        logging.debug('organization %r', self.payload)
+
         if self.payload['action'] == 'member_invited':
             notify_invite(self.payload)
         elif self.payload['action'] == 'member_added':
