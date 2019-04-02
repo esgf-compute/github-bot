@@ -14,7 +14,7 @@ USERNAME = os.environ.get('GIT_USERNAME', None)
 PASSWORD = os.environ['GIT_PASSWORD']
 CALLBACK_PATH = os.environ['CALLBACK_PATH']
 EXTERNAL_HOST = os.environ['EXTERNAL_HOST']
-ORGANIZATION = os.enivron['ORGANIZATION']
+ORGANIZATION = os.environ['ORGANIZATION']
 LOGGING_LEVEL = os.environ.get('LOGGING_LEVEL', 'INFO')
 
 MSG_ACK = """
