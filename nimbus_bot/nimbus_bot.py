@@ -183,7 +183,7 @@ class PayloadView(object):
     @view_config(header='X-Github-Event:issues')
     def payload_issues(self):
         if self.payload['action'] == 'labeled':
-            if 'awaiting-review' in self.payload['action']['label']:
+            if 'awaiting-review' == self.payload['label']['name']:
                 notify_team(payload=self.payload)
 
         return {'status': 200}
