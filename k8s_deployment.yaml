@@ -20,6 +20,13 @@ spec:
       - name: nimbus-github-bot
         image: jasonb87/nimbus-github-bot:latest
         imagePullPolicy: Always
+        resources:
+          limits:
+            cpu: 1
+            memory: 256Mi
+          requests:
+            cpu: 200m
+            memory: 128Mi
         envFrom:
         - configMapRef:
             name: nimbus-github-bot-config
@@ -68,6 +75,11 @@ apiVersion: extensions/v1beta1
 kind: Ingress
 metadata:
   name: nimbus-github-bot
+  annotations:
+    ingress.kubernetes.io/force-hsts: "true"
+    ingress.kubernetes.io/hsts-include-subdomains: "true"
+    ingress.kubernetes.io/hsts-max-age: "31536000"
+    ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   rules:
   - http:
